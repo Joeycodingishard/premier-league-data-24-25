@@ -2,7 +2,7 @@
     Created by Erick Ghuron
 '''
 import json
-
+import pandas as pd
 import requests
 
 
@@ -94,3 +94,35 @@ class PremierLeagueAPI:
                
         return self.__api_call(f'clubs/{teamId}')
     
+    def get_player_stats(self, stat_type: str, season_id: str) -> pd.DataFrame:
+        try:
+            # Parameters
+            params = {
+                "pageSize": 50,
+                "compSeasons": season_id,
+                "comps": 1,
+                "compCodeForActivePlayer": "EN_PR",
+                "altIds": "true"
+            }
+            
+            res = self.__api_call(
+                f"stats/ranked/players/{stat_type}",
+                qparams=params
+            )
+            
+            # Parsing the data
+            data = []
+            for item in res.get("stats", {}).get("content", []):
+                player = item.get("owner", {})
+                data.append({
+                    "Rank": item.get("rank"),
+                    "Player": player.get("name", {}).get("display"),
+                    "Club": player.get("currentTeam", {}).get("name"),
+                    "Nationality": player.get("nationalTeam", {}).get("country"),
+                    "Stat": item.get("value")
+                })
+            return pd.DataFrame(data)
+        
+        except Exception as e:
+            print(f"Failed in geting {stat_type}: {str(e)}")
+            return pd.DataFrame()
