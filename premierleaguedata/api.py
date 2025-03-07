@@ -62,6 +62,25 @@ class PremierLeagueAPI:
         res = requests.get('https://footballapi.pulselive.com/football/compseasons', headers=self.header, params=payload)
         
         return self.__api_call('compseasons', payload)
+    
+    def get_season_id(self, season_label: str = None) -> str:
+        # Call API to get all season data
+        seasons_data = self.__api_call("competitions/1/compseasons")
+
+        # Make sure the API returns data
+        if "content" not in seasons_data:
+            raise ValueError
+
+        # Find the ID of a given season
+        if season_label:
+            for season in seasons_data["content"]:
+                if season["label"] == season_label:
+                    return str(int(season["id"]))
+            raise ValueError(f"Unable to find the season: {season_label}")
+
+        # Get latest season ID (ID max)
+        latest_season = max(seasons_data["content"], key=lambda x: x["id"])
+        return str(int(latest_season["id"]))
 
     def club_incompseason(self, compseason:str) -> dict:
                 
